@@ -21,7 +21,6 @@ logger = logging.getLogger("ProcessingAgent")
 
 
 class SimpleSignalCNN(nn.Module):
-    """Sinyal sınıflandırma için küçük CNN modeli."""
     def __init__(self, num_classes: int = 4):
         super().__init__()
         self.net = nn.Sequential(
@@ -56,7 +55,6 @@ class ProcessingAgent(BaseAgent):
         logger.info(f"Task işleniyor: {task.task_id} — tip={task.task_type}")
         task.agent_id = self.agent_id
         task.status = "running"
-
         try:
             if task.task_type == "matrix_multiply":
                 task.result = self._matrix_multiply(task.payload)
@@ -68,35 +66,27 @@ class ProcessingAgent(BaseAgent):
                 task.result = {"error": f"Bilinmeyen görev tipi: {task.task_type}"}
                 task.status = "failed"
                 return task
-
             task.status = "done"
         except Exception as e:
             task.status = "failed"
             task.result = {"error": str(e)}
             logger.error(f"Task başarısız: {e}")
-
         return task
 
     def _matrix_multiply(self, payload: dict) -> dict:
-        size = payload.get("size", 1000)
+        size = payload.get("size", 500)
         iterations = payload.get("iterations", 1)
-
         a = torch.rand(size, size, device=self.device, dtype=torch.float32)
         b = torch.rand(size, size, device=self.device, dtype=torch.float32)
-
         if self.device == "cuda":
             torch.cuda.synchronize()
-
         start = time.time()
         for _ in range(iterations):
             c = torch.mm(a, b)
-
         if self.device == "cuda":
             torch.cuda.synchronize()
-
         elapsed = time.time() - start
         vram_used = torch.cuda.memory_allocated() / 1e6 if self.device == "cuda" else 0
-
         return {
             "matrix_size": f"{size}x{size}",
             "iterations": iterations,
@@ -109,15 +99,12 @@ class ProcessingAgent(BaseAgent):
     def _signal_classify(self, payload: dict) -> dict:
         signal_length = payload.get("signal_length", 256)
         batch_size = payload.get("batch_size", 8)
-
         signal = torch.rand(batch_size, 1, signal_length, device=self.device)
-
         start = time.time()
         with torch.no_grad():
             logits = self.cnn(signal)
             predictions = torch.argmax(logits, dim=1)
         elapsed = time.time() - start
-
         labels = [self.SIGNAL_CLASSES[p.item()] for p in predictions]
         return {
             "batch_size": batch_size,
@@ -130,14 +117,11 @@ class ProcessingAgent(BaseAgent):
     def _batch_compute(self, payload: dict) -> dict:
         vector_size = payload.get("vector_size", 512)
         batch_count = payload.get("batch_count", 100)
-
         vectors = torch.rand(batch_count, vector_size, device=self.device)
         start = time.time()
-
         norms = torch.norm(vectors, dim=1, keepdim=True)
         normalized = vectors / (norms + 1e-8)
         similarity_matrix = torch.mm(normalized, normalized.T)
-
         elapsed = time.time() - start
         return {
             "vector_size": vector_size,
@@ -150,11 +134,10 @@ class ProcessingAgent(BaseAgent):
 
 if __name__ == "__main__":
     agent = ProcessingAgent()
-
-    # Basit test
-    test_task = Task(
-        task_type="matrix_multiply",
-        payload={"size": 500, "iterations": 3}
-    )
+    logger.info("Test görevi çalıştırılıyor...")
+    test_task = Task(task_type="matrix_multiply", payload={"size": 500, "iterations": 3})
     result = agent.process(test_task)
     logger.info(f"Test sonucu: {result.result}")
+    logger.info("Agent bekleme moduna geçti — Redis bağlantısı bekleniyor...")
+    while True:
+        time.sleep(3600)

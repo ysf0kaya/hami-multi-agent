@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processing-agent
+  namespace: multi-agent
+  labels:
+    app: processing-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: processing-agent
+  template:
+    metadata:
+      labels:
+        app: processing-agent
+    spec:
+      schedulerName: hami-scheduler
+      containers:
+      - name: processing-agent
+        image: ysf0kaya/hami-multi-agent:latest
+        command: ["python3", "agents/processing_agent.py"]
+        env:
+        - name: AGENT_ID
+          value: "processing-1"
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: 1024
+          requests:
+            memory: "1Gi"
+            cpu: "500m"

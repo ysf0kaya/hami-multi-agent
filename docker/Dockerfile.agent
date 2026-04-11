@@ -1,0 +1,30 @@
+# Python + CUDA destekli resmi PyTorch image
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+
+WORKDIR /app
+
+# Gerekli sistem paketleri
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Önce requirements — Docker cache için
+COPY requirements.txt .
+RUN pip install --no-cache-dir \
+    fastapi==0.111.0 \
+    uvicorn==0.30.0 \
+    pydantic==2.7.0 \
+    redis==5.0.4 \
+    httpx==0.27.0 \
+    transformers==4.41.0 \
+    accelerate==0.30.0 \
+    sentencepiece==0.2.0 \
+    psutil==5.9.8 \
+    numpy==1.26.4
+
+# Agent kodlarını kopyala
+COPY agents/ ./agents/
+
+ENV PYTHONPATH=/app
+
+CMD ["python3", "agents/processing_agent.py"]

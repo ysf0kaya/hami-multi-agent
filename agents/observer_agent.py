@@ -32,7 +32,6 @@ class ObserverAgent(BaseAgent):
         logger.info(f"Task işleniyor: {task.task_id} — tip={task.task_type}")
         task.agent_id = self.agent_id
         task.status = "running"
-
         try:
             if task.task_type == "system_metrics":
                 task.result = self._system_metrics()
@@ -42,26 +41,20 @@ class ObserverAgent(BaseAgent):
                 task.result = {"error": f"Bilinmeyen görev tipi: {task.task_type}"}
                 task.status = "failed"
                 return task
-
             task.status = "done"
         except Exception as e:
             task.status = "failed"
             task.result = {"error": str(e)}
             logger.error(f"Task başarısız: {e}")
-
         return task
 
     def _system_metrics(self) -> dict:
         cpu_percent = psutil.cpu_percent(interval=0.5)
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
-
         return {
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "cpu": {
-                "percent": cpu_percent,
-                "core_count": psutil.cpu_count(),
-            },
+            "cpu": {"percent": cpu_percent, "core_count": psutil.cpu_count()},
             "memory": {
                 "total_gb": round(mem.total / 1e9, 2),
                 "used_gb": round(mem.used / 1e9, 2),
@@ -78,12 +71,10 @@ class ObserverAgent(BaseAgent):
     def _gpu_metrics(self) -> dict:
         if not torch.cuda.is_available():
             return {"available": False}
-
         props = torch.cuda.get_device_properties(0)
         allocated = torch.cuda.memory_allocated(0)
-        reserved  = torch.cuda.memory_reserved(0)
-        total     = props.total_memory
-
+        reserved = torch.cuda.memory_reserved(0)
+        total = props.total_memory
         return {
             "available": True,
             "name": props.name,
@@ -97,11 +88,10 @@ class ObserverAgent(BaseAgent):
 
 if __name__ == "__main__":
     agent = ObserverAgent()
-
-    # Basit test
-    test_task = Task(
-        task_type="system_metrics",
-        payload={}
-    )
+    logger.info("Test görevi çalıştırılıyor...")
+    test_task = Task(task_type="system_metrics", payload={})
     result = agent.process(test_task)
     logger.info(f"Test sonucu: {result.result}")
+    logger.info("Agent bekleme moduna geçti — Redis bağlantısı bekleniyor...")
+    while True:
+        time.sleep(3600)

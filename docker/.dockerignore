@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.env
+venv/
+*.bin
+*.safetensors
+*.pt
+models/
+.git/
+reports/
+docs/
+k8s/
+scripts/

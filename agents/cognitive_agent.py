@@ -17,7 +17,6 @@ import torch
 from agents.base_agent import BaseAgent, Task
 
 logger = logging.getLogger("CognitiveAgent")
-
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen1.5-0.5B")
 
 
@@ -55,7 +54,6 @@ class CognitiveAgent(BaseAgent):
         logger.info(f"Task işleniyor: {task.task_id} — tip={task.task_type}")
         task.agent_id = self.agent_id
         task.status = "running"
-
         try:
             if task.task_type == "text_inference":
                 task.result = self._inference(task.payload)
@@ -67,19 +65,16 @@ class CognitiveAgent(BaseAgent):
                 task.result = {"error": f"Bilinmeyen görev tipi: {task.task_type}"}
                 task.status = "failed"
                 return task
-
             task.status = "done"
         except Exception as e:
             task.status = "failed"
             task.result = {"error": str(e)}
             logger.error(f"Task başarısız: {e}")
-
         return task
 
     def _inference(self, payload: dict) -> dict:
         prompt = payload.get("prompt", "Hello")
         max_new_tokens = payload.get("max_new_tokens", 50)
-
         if self.model is None:
             return {
                 "prompt": prompt,
@@ -87,7 +82,6 @@ class CognitiveAgent(BaseAgent):
                 "device": self.device,
                 "model": MODEL_NAME,
             }
-
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         start = time.time()
         with torch.no_grad():
@@ -124,22 +118,15 @@ class CognitiveAgent(BaseAgent):
         if not options:
             return {"error": "Seçenek listesi boş"}
         chosen = options[len(context) % len(options)]
-        return {
-            "context": context,
-            "options": options,
-            "decision": chosen,
-            "device": self.device
-        }
+        return {"context": context, "options": options, "decision": chosen, "device": self.device}
 
 
 if __name__ == "__main__":
     agent = CognitiveAgent()
-    logger.info("Cognitive Agent hazır, görev bekleniyor...")
-
-    # Basit test
-    test_task = Task(
-        task_type="sentiment",
-        payload={"text": "Bu proje harika gidiyor!"}
-    )
+    logger.info("Test görevi çalıştırılıyor...")
+    test_task = Task(task_type="sentiment", payload={"text": "Bu proje harika gidiyor!"})
     result = agent.process(test_task)
     logger.info(f"Test sonucu: {result.result}")
+    logger.info("Agent bekleme moduna geçti — Redis bağlantısı bekleniyor...")
+    while True:
+        time.sleep(3600)

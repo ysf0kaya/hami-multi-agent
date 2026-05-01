@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audio-wav2vec2
+  namespace: multi-agent
+  labels:
+    app: audio-wav2vec2
+    category: KARMA
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audio-wav2vec2
+  template:
+    metadata:
+      labels:
+        app: audio-wav2vec2
+        category: KARMA
+    spec:
+      schedulerName: hami-scheduler
+      containers:
+      - name: audio-wav2vec2
+        image: ysf0kaya/hami-multi-agent:latest
+        command: ["python3", "agents/audio_agent.py"]
+        env:
+        - name: MODEL_NAME
+          value: "wav2vec2-base"
+        - name: AGENT_ID
+          value: "audio-wav2vec2"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: REPEAT
+          value: "5"
+        - name: DATASET_PATH
+          value: "/data/dataset.csv"
+        volumeMounts:
+        - name: dataset-volume
+          mountPath: /data
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: 512
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+      volumes:
+      - name: dataset-volume
+        hostPath:
+          path: /tmp/hami-dataset
+          type: DirectoryOrCreate

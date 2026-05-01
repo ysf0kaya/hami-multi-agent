@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vision-resnet18
+  namespace: multi-agent
+  labels:
+    app: vision-resnet18
+    category: IO_YOGUN
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vision-resnet18
+  template:
+    metadata:
+      labels:
+        app: vision-resnet18
+        category: IO_YOGUN
+    spec:
+      schedulerName: hami-scheduler
+      containers:
+      - name: vision-resnet18
+        image: ysf0kaya/hami-multi-agent:latest
+        command: ["python3", "agents/vision_agent.py"]
+        env:
+        - name: MODEL_NAME
+          value: "resnet-18"
+        - name: AGENT_ID
+          value: "vision-resnet18"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: REPEAT
+          value: "5"
+        - name: DATASET_PATH
+          value: "/data/dataset.csv"
+        volumeMounts:
+        - name: dataset-volume
+          mountPath: /data
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: 256
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+      volumes:
+      - name: dataset-volume
+        hostPath:
+          path: /tmp/hami-dataset
+          type: DirectoryOrCreate

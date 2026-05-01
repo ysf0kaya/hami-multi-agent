@@ -13,14 +13,25 @@ httpx==0.27.0
 
 # GPU computing
 torch==2.3.0
+torchvision==0.18.0
 
-# LLM - Cognitive Agent
+# HuggingFace — tüm agent tipleri için
 transformers==4.41.0
 accelerate==0.30.0
 sentencepiece==0.2.0
+datasets==2.19.0
 
-# System monitoring - Observer Agent
+# Vision agent için
+Pillow==10.3.0
+numpy==1.26.4
+
+# Audio agent için
+librosa==0.10.2
+soundfile==0.12.1
+
+# System monitoring
 psutil==5.9.8
 
-# Numerics
-numpy==1.26.4
+# Data toplama ve ML
+pandas==2.2.2
+scikit-learn==1.4.2

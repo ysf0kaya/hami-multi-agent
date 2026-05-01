@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nlp-roberta
+  namespace: multi-agent
+  labels:
+    app: nlp-roberta
+    category: CPU_YOGUN
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nlp-roberta
+  template:
+    metadata:
+      labels:
+        app: nlp-roberta
+        category: CPU_YOGUN
+    spec:
+      schedulerName: hami-scheduler
+      containers:
+      - name: nlp-roberta
+        image: ysf0kaya/hami-multi-agent:latest
+        command: ["python3", "agents/nlp_agent.py"]
+        env:
+        - name: MODEL_NAME
+          value: "roberta"
+        - name: AGENT_ID
+          value: "nlp-roberta"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: REPEAT
+          value: "5"
+        - name: DATASET_PATH
+          value: "/data/dataset.csv"
+        volumeMounts:
+        - name: dataset-volume
+          mountPath: /data
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: 512
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+      volumes:
+      - name: dataset-volume
+        hostPath:
+          path: /tmp/hami-dataset
+          type: DirectoryOrCreate

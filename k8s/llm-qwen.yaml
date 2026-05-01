@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-qwen
+  namespace: multi-agent
+  labels:
+    app: llm-qwen
+    category: GPU_YOGUN
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-qwen
+  template:
+    metadata:
+      labels:
+        app: llm-qwen
+        category: GPU_YOGUN
+    spec:
+      schedulerName: hami-scheduler
+      containers:
+      - name: llm-qwen
+        image: ysf0kaya/hami-multi-agent:latest
+        command: ["python3", "agents/llm_agent.py"]
+        env:
+        - name: MODEL_NAME
+          value: "qwen-0.5b"
+        - name: AGENT_ID
+          value: "llm-qwen"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: REPEAT
+          value: "5"
+        - name: DATASET_PATH
+          value: "/data/dataset.csv"
+        volumeMounts:
+        - name: dataset-volume
+          mountPath: /data
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: 1536
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+      volumes:
+      - name: dataset-volume
+        hostPath:
+          path: /tmp/hami-dataset
+          type: DirectoryOrCreate

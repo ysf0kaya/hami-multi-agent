@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-tinyllama
+  namespace: multi-agent
+  labels:
+    app: llm-tinyllama
+    category: GPU_YOGUN
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-tinyllama
+  template:
+    metadata:
+      labels:
+        app: llm-tinyllama
+        category: GPU_YOGUN
+    spec:
+      schedulerName: hami-scheduler
+      containers:
+      - name: llm-tinyllama
+        image: ysf0kaya/hami-multi-agent:latest
+        command: ["python3", "agents/llm_agent.py"]
+        env:
+        - name: MODEL_NAME
+          value: "tinyllama"
+        - name: AGENT_ID
+          value: "llm-tinyllama"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: REPEAT
+          value: "5"
+        - name: DATASET_PATH
+          value: "/data/dataset.csv"
+        volumeMounts:
+        - name: dataset-volume
+          mountPath: /data
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: 1536
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+      volumes:
+      - name: dataset-volume
+        hostPath:
+          path: /tmp/hami-dataset
+          type: DirectoryOrCreate

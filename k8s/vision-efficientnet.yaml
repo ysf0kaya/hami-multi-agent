@@ -1,30 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vision-efficientnet
+  name: vision-efficientnet2
   namespace: multi-agent
   labels:
-    app: vision-efficientnet
+    app: vision-efficientnet2
     category: IO_YOGUN
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vision-efficientnet
+      app: vision-efficientnet2
   template:
     metadata:
       labels:
-        app: vision-efficientnet
+        app: vision-efficientnet2
         category: IO_YOGUN
     spec:
       schedulerName: hami-scheduler
       containers:
-      - name: vision-efficientnet
+      - name: vision-efficientnet2
         image: ysf0kaya/hami-multi-agent:latest
         command: ["python3", "agents/vision_agent.py"]
         env:
         - name: MODEL_NAME
-          value: "efficientnet"
+          value: "mobilenet"
         - name: AGENT_ID
           value: "vision-efficientnet"
         - name: BATCH_SIZE
@@ -39,12 +39,12 @@ spec:
         resources:
           limits:
             nvidia.com/gpu: 1
-            nvidia.com/gpumem: 256
+            nvidia.com/gpumem: 768
           requests:
             memory: "2Gi"
             cpu: "500m"
       volumes:
       - name: dataset-volume
         hostPath:
-          path: /tmp/hami-dataset
+          path: /home/ysf/hami-dataset
           type: DirectoryOrCreate

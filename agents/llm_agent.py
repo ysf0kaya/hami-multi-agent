@@ -24,7 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("LLMAgent")
 
-# ── Model Kataloğu ────────────────────────────────────────────────────────────
 MODELS = {
     "qwen-0.5b":  "Qwen/Qwen1.5-0.5B",
     "tinyllama":  "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
@@ -33,7 +32,6 @@ MODELS = {
     "opt-125m":   "facebook/opt-125m",
 }
 
-# ── Sabit Batch Verisi ────────────────────────────────────────────────────────
 BATCH_PROMPTS = [
     "Artificial intelligence is",
     "Kubernetes is a system for",
@@ -45,12 +43,11 @@ BATCH_PROMPTS = [
     "Cloud computing provides",
 ] * 4  # 32 prompt
 
-# ── Ayarlar ───────────────────────────────────────────────────────────────────
-MODEL_KEY   = os.getenv("MODEL_NAME", "distilgpt2")
-BATCH_SIZE  = int(os.getenv("BATCH_SIZE", "32"))
-REPEAT      = int(os.getenv("REPEAT", "5"))
-AGENT_ID    = os.getenv("AGENT_ID", f"llm-{MODEL_KEY}")
-CATEGORY    = "GPU_YOGUN"
+MODEL_KEY  = os.getenv("MODEL_NAME", "distilgpt2")
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "32"))
+REPEAT     = int(os.getenv("REPEAT", "5"))
+AGENT_ID   = os.getenv("AGENT_ID", f"llm-{MODEL_KEY}")
+CATEGORY   = "GPU_YOGUN"
 
 
 def run():
@@ -62,9 +59,15 @@ def run():
     pipe = pipeline(
         "text-generation",
         model=model_name,
-        device=0,           # GPU
+        device=0,
         truncation=True,
     )
+
+    # pad_token ayarla — GPT2 tabanlı modeller için zorunlu
+    if pipe.tokenizer.pad_token_id is None:
+        pipe.tokenizer.pad_token_id = pipe.tokenizer.eos_token_id
+        pipe.tokenizer.pad_token = pipe.tokenizer.eos_token
+
     logger.info(f"Model yüklendi ✅ — {model_name}")
 
     collector = MetricCollector(
@@ -94,10 +97,9 @@ def run():
     collector.stop()
     summary = collector.save()
     logger.info(f"Sonuç kaydedildi: {summary}")
-
     logger.info("Agent bekleme moduna geçti...")
     while True:
-        time.sleep(3600)
+        time.sleep(60)
 
 
 if __name__ == "__main__":

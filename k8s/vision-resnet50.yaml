@@ -39,12 +39,12 @@ spec:
         resources:
           limits:
             nvidia.com/gpu: 1
-            nvidia.com/gpumem: 512
+            nvidia.com/gpumem: 768
           requests:
             memory: "2Gi"
             cpu: "500m"
       volumes:
       - name: dataset-volume
         hostPath:
-          path: /tmp/hami-dataset
+          path: /home/ysf/hami-dataset
           type: DirectoryOrCreate

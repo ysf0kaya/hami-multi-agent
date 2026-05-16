@@ -46,5 +46,5 @@ spec:
       volumes:
       - name: dataset-volume
         hostPath:
-          path: /tmp/hami-dataset
+          path: /home/ysf/hami-dataset
           type: DirectoryOrCreate

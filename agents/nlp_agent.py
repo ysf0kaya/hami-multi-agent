@@ -24,7 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("NLPAgent")
 
-# ── Model Kataloğu ────────────────────────────────────────────────────────────
 MODELS = {
     "bert-base":   "bert-base-uncased",
     "distilbert":  "distilbert-base-uncased",
@@ -33,19 +32,17 @@ MODELS = {
     "albert-base": "albert-base-v2",
 }
 
-# ── Sabit Batch Verisi ────────────────────────────────────────────────────────
-BATCH_TEXTS = [
-    "This product is absolutely amazing and works perfectly.",
-    "I hate this service, worst experience ever.",
-    "The weather today is quite nice and sunny.",
-    "Kubernetes simplifies container orchestration greatly.",
-    "This movie was boring and too long.",
-    "Incredible performance, highly recommended to everyone.",
-    "The package arrived late and damaged.",
-    "GPU virtualization enables better resource utilization.",
+BATCH_TEXTS_MASK = [
+    "The [MASK] is very important for machine learning.",
+    "Kubernetes [MASK] container orchestration at scale.",
+    "The weather today is [MASK] and sunny.",
+    "GPU [MASK] enables faster model training.",
+    "Deep learning [MASK] require large datasets.",
+    "The [MASK] arrived late and was damaged.",
+    "Cloud [MASK] provides scalable infrastructure.",
+    "Neural [MASK] can learn complex patterns.",
 ] * 4  # 32 metin
 
-# ── Ayarlar ───────────────────────────────────────────────────────────────────
 MODEL_KEY  = os.getenv("MODEL_NAME", "bert-tiny")
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "32"))
 REPEAT     = int(os.getenv("REPEAT", "5"))
@@ -59,20 +56,15 @@ def run():
         raise ValueError(f"Bilinmeyen model: {MODEL_KEY}. Seçenekler: {list(MODELS.keys())}")
 
     logger.info(f"Model yükleniyor: {model_name}")
-    pipe = pipeline(
-        "fill-mask" if "bert" in model_name or "albert" in model_name else "text-classification",
-        model=model_name,
-        device=0,
-        truncation=True,
-    )
-    logger.info(f"Model yüklendi ✅ — {model_name}")
 
-    # fill-mask için batch veriyi uyarla
-    if pipe.task == "fill-mask":
-        batch_data = [t.split()[0] + " [MASK] " + " ".join(t.split()[1:])
-                      for t in BATCH_TEXTS]
+    if MODEL_KEY == "roberta":
+        pipe = pipeline("text-classification", model=model_name, device=0)
+        batch_data = [t.replace("[MASK]", "really") for t in BATCH_TEXTS_MASK]
     else:
-        batch_data = BATCH_TEXTS
+        pipe = pipeline("fill-mask", model=model_name, device=0)
+        batch_data = BATCH_TEXTS_MASK
+
+    logger.info(f"Model yüklendi ✅ — {model_name}")
 
     collector = MetricCollector(
         agent_id=AGENT_ID,
@@ -84,9 +76,7 @@ def run():
     for i in range(REPEAT):
         logger.info(f"Batch {i+1}/{REPEAT} başlıyor...")
         start = time.time()
-
-        pipe(batch_data, batch_size=BATCH_SIZE, truncation=True)
-
+        pipe(batch_data, batch_size=BATCH_SIZE)
         duration = time.time() - start
         collector.record_batch(duration_s=duration)
         logger.info(f"Batch {i+1} tamamlandı — {duration:.2f}s")
@@ -94,10 +84,8 @@ def run():
     collector.stop()
     summary = collector.save()
     logger.info(f"Sonuç kaydedildi: {summary}")
-
-    logger.info("Agent bekleme moduna geçti...")
-    while True:
-        time.sleep(3600)
+    logger.info("Agent görevi tamamladı, çıkıyor...")
+    # sleep yok — pod kapanır, Completed olur
 
 
 if __name__ == "__main__":
